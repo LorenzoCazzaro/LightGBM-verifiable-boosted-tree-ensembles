@@ -230,6 +230,8 @@ void GBDT::Train(int snapshot_freq, const std::string& model_output_path) {
   Common::FunctionTimer fun_timer("GBDT::Train", global_timer);
   bool is_finished = false;
   auto start_time = std::chrono::steady_clock::now();
+  std::cout << "k: " << config_->k << std::endl;
+  std::cout << "p: " << config_->p << std::endl;
   for (int iter = 0; iter < config_->num_iterations && !is_finished; ++iter) {
     is_finished = TrainOneIter(nullptr, nullptr);
     if (!is_finished) {

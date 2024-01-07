@@ -266,6 +266,16 @@ struct Config {
   #pragma region Learning Control Parameters
   #endif  // __NVCC__
 
+  //ADDED
+  // check = >= 0.0
+  // desc = parameter equivalent to the maximum perturbation that appears in the large-spread condition
+  double k = 0;
+
+  //ADDED
+  // check = >= 0.0
+  // desc = type of norm that appears in the large-spread condition
+  std::string p = "inf";
+
   // desc = used only with ``cpu`` device type
   // desc = set this to ``true`` to force col-wise histogram building
   // desc = enabling this is recommended when:

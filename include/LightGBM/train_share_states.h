@@ -14,6 +14,11 @@
 #include <memory>
 #include <vector>
 
+#include <map>
+#include <set>
+
+using namespace std;
+
 namespace LightGBM {
 
 class MultiValBinWrapper {
@@ -270,7 +275,10 @@ struct TrainingShareStates {
   bool is_constant_hessian = true;
   const data_size_t* bagging_use_indices;
   data_size_t bagging_indices_cnt;
-
+  map<int, set<double>> used_thresholds;
+  std::string p;
+  double k;
+  
   TrainingShareStates() {
     multi_val_bin_wrapper_.reset(nullptr);
   }

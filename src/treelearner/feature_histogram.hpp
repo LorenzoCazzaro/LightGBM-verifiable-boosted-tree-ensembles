@@ -165,12 +165,13 @@ class FeatureHistogram {
   void FindBestThreshold(double sum_gradient, double sum_hessian,
                          data_size_t num_data,
                          const FeatureConstraint* constraints,
+                         FeatureLargeSpreadConditionConstraint* lsc_constraint,
                          double parent_output,
                          SplitInfo* output) {
     output->default_left = true;
     output->gain = kMinScore;
-    find_best_threshold_fun_(sum_gradient, sum_hessian + 2 * kEpsilon, num_data,
-                             constraints, parent_output, output);
+    find_best_threshold_fun_serial_(sum_gradient, sum_hessian + 2 * kEpsilon, num_data,
+                             constraints, lsc_constraint, parent_output, output);
     output->gain *= meta_->penalty;
   }
 
@@ -387,15 +388,15 @@ class FeatureHistogram {
 #define TEMPLATE_PREFIX USE_RAND, USE_MC, USE_L1, USE_MAX_OUTPUT, USE_SMOOTHING
 #define LAMBDA_ARGUMENTS                                         \
   double sum_gradient, double sum_hessian, data_size_t num_data, \
-      const FeatureConstraint* constraints, double parent_output, SplitInfo *output
+      const FeatureConstraint* constraints, FeatureLargeSpreadConditionConstraint* lsc_constraint, double parent_output, SplitInfo *output
 #define BEFORE_ARGUMENTS sum_gradient, sum_hessian, parent_output, num_data, output, &rand_threshold
 #define FUNC_ARGUMENTS                                                      \
-  sum_gradient, sum_hessian, num_data, constraints, min_gain_shift, \
+  sum_gradient, sum_hessian, num_data, constraints, lsc_constraint, min_gain_shift, \
       output, rand_threshold, parent_output
 
       if (meta_->num_bin > 2 && meta_->missing_type != MissingType::None) {
         if (meta_->missing_type == MissingType::Zero) {
-          find_best_threshold_fun_ = [=](LAMBDA_ARGUMENTS) {
+          find_best_threshold_fun_serial_ = [=](LAMBDA_ARGUMENTS) {
             int rand_threshold = 0;
             double min_gain_shift =
                 BeforeNumerical<USE_RAND, USE_L1, USE_MAX_OUTPUT, USE_SMOOTHING>(
@@ -406,7 +407,7 @@ class FeatureHistogram {
                 FUNC_ARGUMENTS);
           };
         } else {
-          find_best_threshold_fun_ = [=](LAMBDA_ARGUMENTS) {
+          find_best_threshold_fun_serial_ = [=](LAMBDA_ARGUMENTS) {
             int rand_threshold = 0;
             double min_gain_shift =
                 BeforeNumerical<USE_RAND, USE_L1, USE_MAX_OUTPUT, USE_SMOOTHING>(
@@ -419,7 +420,7 @@ class FeatureHistogram {
         }
       } else {
         if (meta_->missing_type != MissingType::NaN) {
-          find_best_threshold_fun_ = [=](LAMBDA_ARGUMENTS) {
+          find_best_threshold_fun_serial_ = [=](LAMBDA_ARGUMENTS) {
             int rand_threshold = 0;
             double min_gain_shift =
                 BeforeNumerical<USE_RAND, USE_L1, USE_MAX_OUTPUT, USE_SMOOTHING>(
@@ -428,7 +429,7 @@ class FeatureHistogram {
                 FUNC_ARGUMENTS);
           };
         } else {
-          find_best_threshold_fun_ = [=](LAMBDA_ARGUMENTS) {
+          find_best_threshold_fun_serial_ = [=](LAMBDA_ARGUMENTS) {
             int rand_threshold = 0;
             double min_gain_shift =
                 BeforeNumerical<USE_RAND, USE_L1, USE_MAX_OUTPUT, USE_SMOOTHING>(
@@ -1106,6 +1107,7 @@ class FeatureHistogram {
   void FindBestThresholdSequentially(double sum_gradient, double sum_hessian,
                                      data_size_t num_data,
                                      const FeatureConstraint* constraints,
+                                     FeatureLargeSpreadConditionConstraint* lsc_constraint,
                                      double min_gain_shift, SplitInfo* output,
                                      int rand_threshold, double parent_output) {
     const int8_t offset = meta_->offset;
@@ -1141,6 +1143,14 @@ class FeatureHistogram {
             continue;
           }
         }
+        //std::cout << "Viene verificata lse property" << std::endl;
+        //ADDED: LSC check
+        //TODO: save the bin instead of the real threshold, so it is not necessary to save the inner feature index
+        if( !lsc_constraint->ThresholdSatisfiesConstraint(t - 1 + offset) )
+          continue;
+        //cout << "Completata verifica lse property" << std::endl;
+        //
+        //TODO: cosa accade se non ci son threshold valide per una feature?
         const auto grad = GET_GRAD(data_, t);
         const auto hess = GET_HESS(data_, t);
         data_size_t cnt =
@@ -1629,6 +1639,10 @@ class FeatureHistogram {
   int16_t* data_int16_;
   bool is_splittable_ = true;
 
+  std::function<void(double, double, data_size_t, const FeatureConstraint*, FeatureLargeSpreadConditionConstraint*,
+                     double, SplitInfo*)>
+      find_best_threshold_fun_serial_;
+      
   std::function<void(double, double, data_size_t, const FeatureConstraint*,
                      double, SplitInfo*)>
       find_best_threshold_fun_;

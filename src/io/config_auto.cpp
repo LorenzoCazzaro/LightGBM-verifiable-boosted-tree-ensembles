@@ -320,6 +320,8 @@ const std::unordered_set<std::string>& Config::parameter_set() {
   "gpu_device_id",
   "gpu_use_dp",
   "num_gpu",
+  "k", //ADDED
+  "p" //ADDED
   });
   return params;
 }
@@ -327,6 +329,13 @@ const std::unordered_set<std::string>& Config::parameter_set() {
 void Config::GetMembersFromString(const std::unordered_map<std::string, std::string>& params) {
   std::string tmp_str = "";
   GetString(params, "data", &data);
+
+  //ADDED
+  GetDouble(params, "k", &k);
+  //CHECK_GE(k, -0.1);
+
+  //ADDED
+  GetString(params, "p", &p);
 
   if (GetString(params, "valid", &tmp_str)) {
     valid = Common::Split(tmp_str.c_str(), ',');

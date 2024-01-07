@@ -17,6 +17,54 @@
 
 namespace LightGBM {
 
+struct FeatureLargeSpreadConditionConstraint {
+  set<double> thresholds;
+  std::string p = "inf";
+  double k = 0.0;
+  const Dataset* train_data;
+  int feature = 0;
+
+  void Init(set<double>& thresholds, std::string p, double k, const Dataset* train_data, int feature){
+    this->thresholds = thresholds; //TODO: ottimizzabile tramite pointer
+    this->p = p;
+    this->k = k;
+    this->train_data = train_data;
+    //cout << "TEST TRAIN DATA: " << train_data->num_features() << endl;
+    this->feature = feature;
+  }
+  bool ThresholdSatisfiesConstraint(int threshold /*double threshold*/) { //TODO: si può far di meglio ed evitare i train data dentro il constraint?
+    //TODO: ottimizzabile tramite albero per intervalli
+    if(thresholds.empty())
+      return true; //Se non empty, allora train_data è stato inizializzato
+    //std::cout << "Inizia verifica constraint" << std::endl;
+    double real_threshold = train_data->RealThreshold(feature, threshold);
+    //cout << "REAL threshold: " << real_threshold << endl;
+    for(auto iter = thresholds.begin(); iter != thresholds.end(); iter++)
+      if(abs(real_threshold - *iter) < 2*k)
+        return false;
+    return true;
+  }
+  //virtual ~LargeSpreadConditionConstraint() {} //TODO: serve?
+};
+
+struct LargeSpreadConditionConstraints {
+  vector<FeatureLargeSpreadConditionConstraint> feature_lsc_constraints;
+  std::string p = "inf";
+  double k = 0.0;
+  void Init(map<int, set<double>>&  used_thresholds, int num_features, std::string p, double k, const Dataset* train_data){
+    this->p = p;
+    this->k = k;
+    feature_lsc_constraints = vector<FeatureLargeSpreadConditionConstraint>(num_features);
+    for(auto iter = used_thresholds.begin(); iter != used_thresholds.end(); iter++){
+      feature_lsc_constraints[iter->first].Init(iter->second, this->p, this->k, train_data, iter->first);
+    }
+    //cout << "Completati init constraints" << endl;
+  }
+  FeatureLargeSpreadConditionConstraint *GetFeatureConstraint(int feature_index){
+    return &feature_lsc_constraints[feature_index];
+  }
+};
+
 class LeafConstraintsBase;
 
 struct BasicConstraint {

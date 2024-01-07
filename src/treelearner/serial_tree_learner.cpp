@@ -14,6 +14,7 @@
 #include <set>
 #include <unordered_map>
 #include <utility>
+#include <iostream>
 
 #include "cost_effective_gradient_boosting.hpp"
 
@@ -209,6 +210,9 @@ Tree* SerialTreeLearner::Train(const score_t* gradients, const score_t *hessians
 
   int init_splits = ForceSplits(tree_ptr, &left_leaf, &right_leaf, &cur_depth);
 
+  //ADDED
+  map<int, set<double>> thresholds_used_in_tree;
+
   for (int split = init_splits; split < config_->num_leaves - 1; ++split) {
     // some initial works before finding best split
     if (BeforeFindBestSplit(tree_ptr, left_leaf, right_leaf)) {
@@ -227,11 +231,21 @@ Tree* SerialTreeLearner::Train(const score_t* gradients, const score_t *hessians
     // split tree with best leaf
     Split(tree_ptr, best_leaf, &left_leaf, &right_leaf);
     cur_depth = std::max(cur_depth, tree->leaf_depth(left_leaf));
+
+    //ADDED
+    const int inner_feature_index = train_data_->InnerFeatureIndex(best_leaf_SplitInfo.feature);
+    double threshold_double = train_data_->RealThreshold(inner_feature_index, best_leaf_SplitInfo.threshold);
+    thresholds_used_in_tree[inner_feature_index].insert(threshold_double);
+    //
   }
 
   if (config_->use_quantized_grad && config_->quant_train_renew_leaf) {
     gradient_discretizer_->RenewIntGradTreeOutput(tree.get(), config_, data_partition_.get(), gradients_, hessians_,
       [this] (int leaf_index) { return GetGlobalDataCountInLeaf(leaf_index); });
+  }
+
+  for(auto iter = thresholds_used_in_tree.begin(); iter != thresholds_used_in_tree.end(); iter++){
+    share_state_->used_thresholds[iter->first].insert(iter->second.begin(), iter->second.end());
   }
 
   Log::Debug("Trained a tree with leaves = %d and depth = %d", tree->num_leaves(), cur_depth);
@@ -290,6 +304,9 @@ void SerialTreeLearner::BeforeTrain() {
   data_partition_->Init();
 
   constraints_->Reset();
+
+  //TODO: attivare solo con l'opzione giusta in config_
+  large_spread_condition_constraint_.Init(share_state_->used_thresholds, train_data_->num_features(), config_->p, config_->k, train_data_);
 
   // reset the splits for leaves
   for (int i = 0; i < config_->num_leaves; ++i) {
@@ -843,6 +860,12 @@ void SerialTreeLearner::SplitInner(Tree* tree, int best_leaf, int* left_leaf,
   // init the leaves that used on next iteration
   if (!config_->use_quantized_grad) {
     if (best_split_info.left_count < best_split_info.right_count) {
+      //ADDED
+      const int inner_feature_index = train_data_->InnerFeatureIndex(best_split_info.feature);
+      auto threshold_double = train_data_->RealThreshold(inner_feature_index, best_split_info.threshold);
+      cout << "FEATURE: " << best_split_info.feature << ", THRESHOLD: " << threshold_double << ", GAIN: " << best_split_info.gain << endl;
+      cout << "LEFT COUNT: " << best_split_info.left_count << ", RIGHT COUNT: " << best_split_info.right_count << endl;
+
       CHECK_GT(best_split_info.left_count, 0);
       smaller_leaf_splits_->Init(*left_leaf, data_partition_.get(),
                                  best_split_info.left_sum_gradient,
@@ -974,9 +997,12 @@ void SerialTreeLearner::ComputeBestSplitForFeature(
         num_data,
         constraints_->GetFeatureConstraint(leaf_splits->leaf_index(), feature_index), parent_output, &new_split);
   } else {
+    //TODO: questo è il punto per trovare la best threshold, cioè quello che ci interessa
+    //Utilizzare i constraint alle feature potrebbe essere utile?
+    //std::cout << "FEATURE TO FIND THE BEST SPLIT: " << feature_index << std::endl;
     histogram_array_[feature_index].FindBestThreshold(
         leaf_splits->sum_gradients(), leaf_splits->sum_hessians(), num_data,
-        constraints_->GetFeatureConstraint(leaf_splits->leaf_index(), feature_index), parent_output, &new_split);
+        constraints_->GetFeatureConstraint(leaf_splits->leaf_index(), feature_index), large_spread_condition_constraint_.GetFeatureConstraint(feature_index), parent_output, &new_split);
   }
   new_split.feature = real_fidx;
   if (cegb_ != nullptr) {

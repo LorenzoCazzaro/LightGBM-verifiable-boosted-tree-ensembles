@@ -207,6 +207,9 @@ class SerialTreeLearner: public TreeLearner {
   /*! \brief stores minimum and maximum constraints for each leaf */
   std::unique_ptr<LeafConstraintsBase> constraints_;
 
+  /*! \brief ADDED: store the large-spread constraint for the trained tree*/
+  LargeSpreadConditionConstraints large_spread_condition_constraint_;
+  
   /*! \brief stores best thresholds for all feature for smaller leaf */
   std::unique_ptr<LeafSplits> smaller_leaf_splits_;
   /*! \brief stores best thresholds for all feature for larger leaf */
