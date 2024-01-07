@@ -1,0 +1,10 @@
+/home/lorenzo/Scrivania/LightGBM_Verif_Boosting/build/CMakeFiles/install/strip.dir
+/home/lorenzo/Scrivania/LightGBM_Verif_Boosting/build/CMakeFiles/install/local.dir
+/home/lorenzo/Scrivania/LightGBM_Verif_Boosting/build/CMakeFiles/edit_cache.dir
+/home/lorenzo/Scrivania/LightGBM_Verif_Boosting/build/CMakeFiles/_lightgbm.dir
+/home/lorenzo/Scrivania/LightGBM_Verif_Boosting/build/CMakeFiles/lightgbm_capi_objs.dir
+/home/lorenzo/Scrivania/LightGBM_Verif_Boosting/build/CMakeFiles/install.dir
+/home/lorenzo/Scrivania/LightGBM_Verif_Boosting/build/CMakeFiles/list_install_components.dir
+/home/lorenzo/Scrivania/LightGBM_Verif_Boosting/build/CMakeFiles/rebuild_cache.dir
+/home/lorenzo/Scrivania/LightGBM_Verif_Boosting/build/CMakeFiles/lightgbm.dir
+/home/lorenzo/Scrivania/LightGBM_Verif_Boosting/build/CMakeFiles/lightgbm_objs.dir
