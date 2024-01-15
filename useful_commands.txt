@@ -1,0 +1,1 @@
+python3 verify_lse_property.py ./datasets/webspam/models/gbdt_lse/lightgbm_lse_101_6_0_0.0006.json 0.0006
