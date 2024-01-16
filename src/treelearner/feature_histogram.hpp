@@ -1143,13 +1143,6 @@ class FeatureHistogram {
             continue;
           }
         }
-        //std::cout << "Viene verificata lse property" << std::endl;
-        //ADDED: LSC check
-        //TODO: save the bin instead of the real threshold, so it is not necessary to save the inner feature index
-        if( !lsc_constraint->ThresholdSatisfiesConstraint(t - 1 + offset) )
-          continue;
-        //cout << "Completata verifica lse property" << std::endl;
-        //
         //TODO: cosa accade se non ci son threshold valide per una feature?
         const auto grad = GET_GRAD(data_, t);
         const auto hess = GET_HESS(data_, t);
@@ -1197,6 +1190,14 @@ class FeatureHistogram {
         if (current_gain <= min_gain_shift) {
           continue;
         }
+
+        //std::cout << "Viene verificata lse property" << std::endl;
+        //ADDED: LSC check
+        //TODO: save the bin instead of the real threshold, so it is not necessary to save the inner feature index
+        if( !lsc_constraint->ThresholdSatisfiesConstraint(t - 1 + offset) )
+          continue;
+        //cout << "Completata verifica lse property" << std::endl;
+        //
 
         // mark as able to be split
         is_splittable_ = true;
@@ -1290,6 +1291,14 @@ class FeatureHistogram {
         if (current_gain <= min_gain_shift) {
           continue;
         }
+
+        //std::cout << "Viene verificata lse property" << std::endl;
+        //ADDED: LSC check
+        //TODO: save the bin instead of the real threshold, so it is not necessary to save the inner feature index
+        if( !lsc_constraint->ThresholdSatisfiesConstraint(t + offset) )
+          continue;
+        //cout << "Completata verifica lse property" << std::endl;
+        //
 
         // mark as able to be split
         is_splittable_ = true;

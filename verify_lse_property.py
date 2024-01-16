@@ -38,7 +38,7 @@ def check_lse_condition(lightgbm_model_json, k):
                     stack.append(node["left_child"])
         tree_id += 1
     
-    #print(thresholds_x_tree)
+    print("FINAL TREE ID: ", tree_id)
 
     tree_ids = list(thresholds_x_tree.keys())
     for i in range(0, len(tree_ids)):
