@@ -335,7 +335,8 @@ void Config::GetMembersFromString(const std::unordered_map<std::string, std::str
   //CHECK_GE(k, -0.1);
 
   //ADDED
-  GetString(params, "p", &p);
+  GetDouble(params, "p", &p);
+  CHECK_GE(p, 0);
 
   if (GetString(params, "valid", &tmp_str)) {
     valid = Common::Split(tmp_str.c_str(), ',');

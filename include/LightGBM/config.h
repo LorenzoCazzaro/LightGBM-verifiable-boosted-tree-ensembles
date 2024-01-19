@@ -272,9 +272,8 @@ struct Config {
   double k = 0;
 
   //ADDED
-  // check = >= 0.0
   // desc = type of norm that appears in the large-spread condition
-  std::string p = "inf";
+  double p = std::numeric_limits<double>::infinity();
 
   // desc = used only with ``cpu`` device type
   // desc = set this to ``true`` to force col-wise histogram building
@@ -1174,6 +1173,10 @@ inline bool Config::GetDouble(
   const std::unordered_map<std::string, std::string>& params,
   const std::string& name, double* out) {
   if (params.count(name) > 0 && !params.at(name).empty()) {
+    if (name == "inf") {
+      (*out) = std::numeric_limits<double>::infinity();
+      return true;
+    }
     if (!Common::AtofAndCheck(params.at(name).c_str(), out)) {
       Log::Fatal("Parameter %s should be of type double, got \"%s\"",
                  name.c_str(), params.at(name).c_str());
