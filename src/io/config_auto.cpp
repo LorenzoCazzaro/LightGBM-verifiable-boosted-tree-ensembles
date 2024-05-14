@@ -321,7 +321,8 @@ const std::unordered_set<std::string>& Config::parameter_set() {
   "gpu_use_dp",
   "num_gpu",
   "k", //ADDED
-  "p" //ADDED
+  "p", //ADDED
+  "features_involved_in_lsc" //ADDED
   });
   return params;
 }
@@ -338,6 +339,9 @@ void Config::GetMembersFromString(const std::unordered_map<std::string, std::str
   GetDouble(params, "p", &p);
   CHECK_GE(p, 0);
 
+  //ADDED
+  GetString(params, "features_involved_in_lsc", &features_involved_in_lsc);
+  
   if (GetString(params, "valid", &tmp_str)) {
     valid = Common::Split(tmp_str.c_str(), ',');
   }

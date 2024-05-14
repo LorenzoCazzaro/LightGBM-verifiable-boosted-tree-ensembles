@@ -303,10 +303,59 @@ void SerialTreeLearner::BeforeTrain() {
   // initialize data partition
   data_partition_->Init();
 
+  cout << "NUM FEATURES: " << train_data_->num_features() << endl;
+
+  vector<int> vfi = train_data_->ValidFeatureIndices();
+  cout << "VALID INDICES: ";
+  for(auto iter = vfi.begin(); iter != vfi.end(); iter++)
+    cout << *iter << " - ";
+  cout << endl;
+
+  cout << "REAL INDICES: ";
+  for(int index = 0; index < train_data_->num_features(); index++)
+    cout << train_data_->RealFeatureIndex(index) << " - ";
+  cout << endl;
+
+  cout << "INNER INDICES: ";
+  for(int index = 0; index < train_data_->num_features(); index++)
+    cout << train_data_->InnerFeatureIndex(train_data_->RealFeatureIndex(index)) << " - ";
+  cout << endl;
+
   constraints_->Reset();
 
+  vector<int> real_fidxs;
+  for(int index = 0; index < train_data_->num_features(); index++)
+    real_fidxs.push_back(train_data_->RealFeatureIndex(index));
+
+  vector<int> constrained_features;
+  if (config_->features_involved_in_lsc == "-1"){
+    for (int i = 0; i < train_data_->num_features(); i++) {
+      constrained_features.push_back(i);
+    }
+  } else if (config_->features_involved_in_lsc.size() > 0) { //assume that the format is correct
+    std::string s = config_->features_involved_in_lsc;
+    std::string delimiter = "-";
+    while(s.size() > 0 and s.find(delimiter) != string::npos){
+      std::string token = s.substr(0, s.find(delimiter));
+      int feature_index = stoi(token);
+      auto feature_index_pos = std::find(real_fidxs.begin(), real_fidxs.end(), feature_index);
+      if ( feature_index_pos != real_fidxs.end())
+        constrained_features.push_back(feature_index_pos-real_fidxs.begin());
+      s = s.substr(s.find(delimiter)+1, s.size());
+    }
+    if (s.size() > 0 and s.find(delimiter) == string::npos) {
+      int feature_index = stoi(s);
+      auto feature_index_pos = std::find(real_fidxs.begin(), real_fidxs.end(), feature_index);
+      if ( feature_index_pos != real_fidxs.end())
+        constrained_features.push_back(feature_index_pos-real_fidxs.begin());
+    }
+  }
+
+  for(auto iter = constrained_features.begin(); iter != constrained_features.end(); iter++)
+    cout << "FEATURE CONSTRAINED: " << *iter << ", REAL FEAT: " << train_data_->RealFeatureIndex(*iter) << endl;
+
   //TODO: attivare solo con l'opzione giusta in config_
-  large_spread_condition_constraint_.Init(share_state_->used_thresholds, train_data_->num_features(), config_->p, config_->k, train_data_);
+  large_spread_condition_constraint_.Init(share_state_->used_thresholds, train_data_->num_features(), constrained_features, config_->p, config_->k, train_data_);
 
   // reset the splits for leaves
   for (int i = 0; i < config_->num_leaves; ++i) {

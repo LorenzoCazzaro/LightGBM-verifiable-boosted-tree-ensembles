@@ -275,6 +275,10 @@ struct Config {
   // desc = type of norm that appears in the large-spread condition
   double p = std::numeric_limits<double>::infinity();
 
+  //ADDED
+  // features_involved_in_lsc = list of features (separated by -) on which the large-spread condition must be forced
+  std::string features_involved_in_lsc;
+  
   // desc = used only with ``cpu`` device type
   // desc = set this to ``true`` to force col-wise histogram building
   // desc = enabling this is recommended when:

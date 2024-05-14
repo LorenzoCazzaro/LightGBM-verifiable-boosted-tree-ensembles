@@ -20,7 +20,7 @@ namespace LightGBM {
 struct FeatureLargeSpreadConditionConstraint {
   set<double> thresholds;
   double p = std::numeric_limits<double>::infinity();
-  double k = 0.0;
+  double k = -0.1;
   const Dataset* train_data;
   int feature = 0;
 
@@ -57,13 +57,18 @@ struct FeatureLargeSpreadConditionConstraint {
 struct LargeSpreadConditionConstraints {
   vector<FeatureLargeSpreadConditionConstraint> feature_lsc_constraints;
   double p = std::numeric_limits<double>::infinity();
-  double k = 0.0;
-  void Init(map<int, set<double>>&  used_thresholds, int num_features, double p, double k, const Dataset* train_data){
+  double k = -0.1;
+  vector<int> features_constrained;
+  void Init(map<int, set<double>>& used_thresholds, int num_features, vector<int> features_involved, double p, double k, const Dataset* train_data){
     this->p = p;
     this->k = k;
-    feature_lsc_constraints = vector<FeatureLargeSpreadConditionConstraint>(num_features);
+    this->feature_lsc_constraints = vector<FeatureLargeSpreadConditionConstraint>(num_features);
+    this->features_constrained.insert(this->features_constrained.begin(), features_involved.begin(), features_involved.end());
     for(auto iter = used_thresholds.begin(); iter != used_thresholds.end(); iter++){
-      feature_lsc_constraints[iter->first].Init(iter->second, this->p, this->k, train_data, iter->first);
+      if(std::find(this->features_constrained.begin(), this->features_constrained.end(), iter->first) != this->features_constrained.end()) {
+        this->feature_lsc_constraints[iter->first].Init(iter->second, this->p, this->k, train_data, iter->first);
+        cout << "CONSTRAINT ON FEATURE: " << iter->first << endl;
+      }
     }
     //cout << "INIT: p " << this->p << ", k " << this->k << endl;
     //cout << "Completati init constraints" << endl;
