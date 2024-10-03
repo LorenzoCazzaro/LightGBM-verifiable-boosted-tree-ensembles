@@ -323,6 +323,7 @@ const std::unordered_set<std::string>& Config::parameter_set() {
   "k", //ADDED
   "p", //ADDED
   "features_involved_in_lsc" //ADDED
+  "stds_feats_filename" //ADDED
   });
   return params;
 }
@@ -341,6 +342,9 @@ void Config::GetMembersFromString(const std::unordered_map<std::string, std::str
 
   //ADDED
   GetString(params, "features_involved_in_lsc", &features_involved_in_lsc);
+
+  //ADDED
+  GetString(params, "stds_feats_filename", &stds_feats_filename);
   
   if (GetString(params, "valid", &tmp_str)) {
     valid = Common::Split(tmp_str.c_str(), ',');

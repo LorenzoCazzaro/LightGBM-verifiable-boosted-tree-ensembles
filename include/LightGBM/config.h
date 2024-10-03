@@ -277,7 +277,11 @@ struct Config {
 
   //ADDED
   // features_involved_in_lsc = list of features (separated by -) on which the large-spread condition must be forced
-  std::string features_involved_in_lsc;
+  std::string features_involved_in_lsc = "-1";
+
+  //ADDED
+  // stds_feats_filename = filename of the list of stds of features (separated by ,)
+  std::string stds_feats_filename = "";
   
   // desc = used only with ``cpu`` device type
   // desc = set this to ``true`` to force col-wise histogram building

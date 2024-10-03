@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <utility>
 #include <iostream>
+#include <fstream>
 
 #include "cost_effective_gradient_boosting.hpp"
 
@@ -297,7 +298,7 @@ void SerialTreeLearner::BeforeTrain() {
   Common::FunctionTimer fun_timer("SerialTreeLearner::BeforeTrain", global_timer);
   // reset histogram pool
   histogram_pool_.ResetMap();
-
+  
   col_sampler_.ResetByTree();
   train_data_->InitTrain(col_sampler_.is_feature_used_bytree(), share_state_.get());
   // initialize data partition
@@ -329,6 +330,7 @@ void SerialTreeLearner::BeforeTrain() {
 
   vector<int> constrained_features;
   if (config_->features_involved_in_lsc == "-1"){
+    cout << "CI SONO TUTTE LE FEATURE VINCOLATE!" << endl;
     for (int i = 0; i < train_data_->num_features(); i++) {
       constrained_features.push_back(i);
     }
@@ -350,12 +352,35 @@ void SerialTreeLearner::BeforeTrain() {
         constrained_features.push_back(feature_index_pos-real_fidxs.begin());
     }
   }
+  cout << "constrained_features len: " << constrained_features.size() << endl;
+
+  vector<double> stds_used_feats;
+  /*Extract features stds*/
+  /*We suppose that we use the stds_feats for every feature*/
+  if (config_->stds_feats_filename != "") {
+    vector<double> stds_feats;
+    std::ifstream in_afl(config_->stds_feats_filename);
+    std::string line;
+    std::getline(in_afl, line);
+    std::istringstream is(line);
+    std::string str;
+    while (std::getline(is, str, ',')) stds_feats.push_back(std::stod(str));
+    for(auto i = 0; i < train_data_->num_features(); i++) {
+      stds_used_feats.push_back(stds_feats[train_data_->RealFeatureIndex(i)]);
+    }
+  } else {
+    for(auto i = 0; i < train_data_->num_features(); i++)
+    //  stds_feats.push_back(1.0);
+      stds_used_feats.push_back(1.0);
+  }
+
+  cout << "stds_used_feats len: " << stds_used_feats.size();
 
   for(auto iter = constrained_features.begin(); iter != constrained_features.end(); iter++)
-    cout << "FEATURE CONSTRAINED: " << *iter << ", REAL FEAT: " << train_data_->RealFeatureIndex(*iter) << endl;
+    cout << "FEATURE CONSTRAINED: " << *iter << ", REAL FEAT: " << train_data_->RealFeatureIndex(*iter) << "WITH STD: " << stds_used_feats[*iter] << endl ;
 
   //TODO: attivare solo con l'opzione giusta in config_
-  large_spread_condition_constraint_.Init(share_state_->used_thresholds, train_data_->num_features(), constrained_features, config_->p, config_->k, train_data_);
+  large_spread_condition_constraint_.Init(share_state_->used_thresholds, train_data_->num_features(), constrained_features, config_->p, config_->k, train_data_, stds_used_feats);
 
   // reset the splits for leaves
   for (int i = 0; i < config_->num_leaves; ++i) {

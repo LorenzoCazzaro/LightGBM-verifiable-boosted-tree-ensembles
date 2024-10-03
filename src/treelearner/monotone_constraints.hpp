@@ -23,14 +23,15 @@ struct FeatureLargeSpreadConditionConstraint {
   double k = -0.1;
   const Dataset* train_data;
   int feature = 0;
-
-  void Init(set<double>& thresholds, double p, double k, const Dataset* train_data, int feature){
+  double feature_std = 1.0;
+  void Init(set<double>& thresholds, double p, double k, const Dataset* train_data, int feature, double feature_std){
     this->thresholds = thresholds; //TODO: ottimizzabile tramite pointer
     this->p = p;
     this->k = k;
     this->train_data = train_data;
     //cout << "TEST TRAIN DATA: " << train_data->num_features() << endl;
     this->feature = feature;
+    this->feature_std = feature_std;
     cout << "INIT: p " << this->p << ", k " << this->k << endl;
   }
   bool ThresholdSatisfiesConstraint(int threshold /*double threshold*/) { //TODO: si può far di meglio ed evitare i train data dentro il constraint?
@@ -44,7 +45,7 @@ struct FeatureLargeSpreadConditionConstraint {
         for(auto iter = thresholds.begin(); iter != thresholds.end(); iter++)
           /*if((this->p == std::numeric_limits<double>::infinity() && abs(real_threshold - *iter) <= 2*k) || (this->p > 0 && pow(pow(abs(real_threshold - *iter), p), 1.0/p) <= 2*k) || this->p == 0)
             return false;*/
-          if ((this->p == 0) || (abs(real_threshold - *iter) <= 2*this->k)){
+          if ((this->p == 0) || (abs(real_threshold - *iter)/feature_std <= 2*this->k)){
             //std::cout << "LSE VIOLATED!" << std::endl;
             return false;
           }
@@ -59,15 +60,17 @@ struct LargeSpreadConditionConstraints {
   double p = std::numeric_limits<double>::infinity();
   double k = -0.1;
   vector<int> features_constrained;
-  void Init(map<int, set<double>>& used_thresholds, int num_features, vector<int> features_involved, double p, double k, const Dataset* train_data){
+  vector<double> features_std;
+  void Init(map<int, set<double>>& used_thresholds, int num_features, vector<int> features_involved, double p, double k, const Dataset* train_data, vector<double> features_std){
     this->p = p;
     this->k = k;
     this->feature_lsc_constraints = vector<FeatureLargeSpreadConditionConstraint>(num_features);
     this->features_constrained.insert(this->features_constrained.begin(), features_involved.begin(), features_involved.end());
+    this->features_std.insert(this->features_std.begin(), features_std.begin(), features_std.end());
     for(auto iter = used_thresholds.begin(); iter != used_thresholds.end(); iter++){
       if(std::find(this->features_constrained.begin(), this->features_constrained.end(), iter->first) != this->features_constrained.end()) {
-        this->feature_lsc_constraints[iter->first].Init(iter->second, this->p, this->k, train_data, iter->first);
-        cout << "CONSTRAINT ON FEATURE: " << iter->first << endl;
+        this->feature_lsc_constraints[iter->first].Init(iter->second, this->p, this->k, train_data, iter->first, this->features_std[iter->first]);
+        cout << "CONSTRAINT ON FEATURE: " << iter->first << "WITH STD: " << this->features_std[iter->first] << endl;
       }
     }
     //cout << "INIT: p " << this->p << ", k " << this->k << endl;
