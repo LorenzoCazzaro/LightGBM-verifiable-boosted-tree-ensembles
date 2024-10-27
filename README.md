@@ -30,6 +30,21 @@ Benefiting from these advantages, LightGBM is being widely-used in many [winning
 
 [Comparison experiments](https://github.com/microsoft/LightGBM/blob/master/docs/Experiments.rst#comparison-experiment) on public datasets show that LightGBM can outperform existing boosting frameworks on both efficiency and accuracy, with significantly lower memory consumption. What's more, [distributed learning experiments](https://github.com/microsoft/LightGBM/blob/master/docs/Experiments.rst#parallel-experiment) show that LightGBM can achieve a linear speed-up by using multiple machines for training in specific settings.
 
+About This Forked Repository
+-----------------------------
+
+This modified version of LightGBM supports the enforcing of the large-spread condition as described in the paper by Calzavara et. al. titled Verifiable Boosted Tree Ensembles accepted at the [46th IEEE Symposium on Security and Privacy 2025 (IEEE S&P 2025)](https://sp2025.ieee-security.org/). 
+
+
+Run the training algorithm for large-spread boosted ensembles in the <em>build</em> folder. The following arguments have been added to the CLI available in C++:
+
+-   `-p` option: the norm ("inf" or a number) of the large-spread condition.
+-   `-k` option: the perturbation norm of the large-spread condition of the large-spread condition.
+
+Example: `./lightgbm/lightgbm config=train.conf boosting=gbdt data=../../datasets/mnist26/dataset/training_set_normalized.csv valid=../../datasets/mnist26/dataset/validation_set_normalized.csv num_trees=500 num_leaves=16 k=0.01 seed=0 output_model=../../datasets/mnist26/models/gbdt_lse/lightgbm_lse_best_0_16_inf_0.01_subflsc_-1.txt p=inf learning_rate=0.1 early_stopping_round=50 feature_fraction=1 verbose=-1`
+
+You can find below the general documentation of LightGBM, useful to understand other parameters introduced in the example above.
+
 Get Started and Documentation
 -----------------------------
 
